@@ -1,3 +1,3 @@
 import "./globals.css";
-export const metadata={title:"Vincent AI Banking Assistant",description:"AI-powered banking and customer experience assistant"};
+export const metadata={title:"Vincent AI 2.0 | Banking & Customer Experience",description:"AI-powered banking, customer experience, complaints, fraud, risk and automation assistant."};
 export default function RootLayout({children}:{children:React.ReactNode}){return <html lang="en"><body>{children}</body></html>}
