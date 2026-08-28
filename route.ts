@@ -1,74 +1,91 @@
-import { NextResponse } from 'next/server';
+import OpenAI from "openai";
+import { NextResponse } from "next/server";
 
-export const runtime = 'nodejs';
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const SYSTEM_PROMPT = `You are Vincent AI, a professional banking and customer experience assistant focused on Tanzania and East African banking operations.
-Provide practical, risk-aware guidance on customer complaints, service quality, fraud risk, SLA management, customer 360, operations, and banking controls.
-Never claim to have access to a customer's account, core banking system, CRM, or transaction records unless data is explicitly supplied in the conversation.
-For suspected fraud or duplicate debits, recommend verification, transaction holds where appropriate, evidence preservation, escalation, and compliance with the bank's approved procedures.
-Do not request passwords, PINs, OTPs, full card numbers, or other sensitive authentication secrets.
-Keep answers clear, structured, and actionable.`;
+const SYSTEM_PROMPT = `
+You are Vincent AI, a professional banking and customer-experience intelligence assistant for Tanzania and international banking.
+
+Your job is to answer open-ended questions, not only predefined questions.
+
+Core domains:
+- Tanzanian and international banking
+- customer experience and customer journeys
+- complaints management, SLA, escalation and root-cause analysis
+- fraud prevention, fraud investigation support and risk management
+- AML and KYC
+- banking operations
+- mobile/digital banking, cards, ATM and payments
+- loans, credit risk, NPL and collections
+- deposits, savings and investment products
+- customer retention and churn
+- banking analytics, KPIs, dashboards and Power BI
+- AI automation and banking workflows
+- cybersecurity awareness
+- banking strategy and service improvement
+
+Language:
+- Detect whether the customer is writing English or Kiswahili.
+- Answer in the same language.
+- If the customer mixes English and Kiswahili, use the dominant language and retain useful banking terms in English.
+- Do not tell the customer to choose a suggested question.
+
+Bank-specific accuracy:
+- Distinguish general banking knowledge from bank-specific facts.
+- Never invent current fees, interest rates, policies, products, branch information, regulatory requirements or financial results.
+- When current or bank-specific information is uncertain, clearly say it needs verification from the bank's official source.
+- Do not claim access to private bank systems or customer accounts.
+
+Security:
+- Never ask for or expose PINs, passwords, OTPs, CVVs, full card numbers or other authentication secrets.
+- For fraud or account-compromise reports, advise the customer to use the bank's official secure reporting channel and follow approved procedures.
+- Do not make binding credit, fraud, compliance or regulatory decisions. Provide guidance and recommend authorized human review.
+
+Answer style:
+- Be practical and professional.
+- Give steps, controls, KPIs or workflow recommendations when useful.
+- For comparisons, use clear categories.
+- For banking professionals, provide enough detail to be actionable.
+`;
 
 export async function POST(request: Request) {
   try {
-    const apiKey = process.env.OPENAI_API_KEY;
-    const model = process.env.OPENAI_MODEL || 'gpt-5-mini';
-
-    if (!apiKey) {
+    if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json(
-        { error: 'OPENAI_API_KEY is not configured in Vercel Environment Variables.' },
+        { error: "OPENAI_API_KEY is not configured on the server." },
         { status: 500 }
       );
     }
 
     const body = await request.json();
-    const message = typeof body?.message === 'string' ? body.message.trim() : '';
+    const message = typeof body?.message === "string" ? body.message.trim() : "";
     const history = Array.isArray(body?.history) ? body.history : [];
 
     if (!message) {
-      return NextResponse.json({ error: 'Message is required.' }, { status: 400 });
+      return NextResponse.json({ error: "Message is required." }, { status: 400 });
     }
 
-    const prior = history
-      .filter((item: any) => item && (item.role === 'user' || item.role === 'ai') && typeof item.text === 'string')
+    const safeHistory = history
+      .filter((m: any) => m && (m.role === "user" || m.role === "assistant") && typeof m.text === "string")
       .slice(-12)
-      .map((item: any) => `${item.role === 'ai' ? 'Assistant' : 'User'}: ${item.text}`)
-      .join('\n');
+      .map((m: any) => ({ role: m.role, content: m.text }));
 
-    const input = `${prior ? `Conversation history:\n${prior}\n\n` : ''}User: ${message}`;
-
-    const response = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        instructions: SYSTEM_PROMPT,
-        input,
-      }),
+    const response = await client.responses.create({
+      model: "gpt-5.6-luna",
+      instructions: SYSTEM_PROMPT,
+      input: [
+        ...safeHistory,
+        { role: "user", content: message }
+      ],
+      max_output_tokens: 1200
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      const detail = data?.error?.message || 'OpenAI request failed.';
-      return NextResponse.json({ error: detail }, { status: response.status });
-    }
-
-    const text = Array.isArray(data?.output)
-      ? data.output
-          .flatMap((item: any) => Array.isArray(item?.content) ? item.content : [])
-          .filter((item: any) => item?.type === 'output_text' && typeof item?.text === 'string')
-          .map((item: any) => item.text)
-          .join('\n')
-          .trim()
-      : '';
-
-    return NextResponse.json({ text: text || 'Vincent AI received your request but returned no text.' });
+    return NextResponse.json({ answer: response.output_text });
   } catch (error) {
-    console.error('Vincent AI API error:', error);
-    return NextResponse.json({ error: 'Unable to reach the AI service. Please try again.' }, { status: 500 });
+    console.error("Vincent AI error:", error);
+    return NextResponse.json(
+      { error: "Vincent AI could not process the request. Please try again." },
+      { status: 500 }
+    );
   }
 }
