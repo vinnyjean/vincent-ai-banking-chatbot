@@ -85,7 +85,7 @@ export async function POST(req: Request) {
       }));
 
     const response = await openai.responses.create({
-      model: process.env.OPENAI_MODEL || "gpt-5.6",
+      model: "gpt-5.6",
       reasoning: { effort: "high" },
       max_output_tokens: 2000,
       input: [
