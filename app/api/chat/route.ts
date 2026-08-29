@@ -71,7 +71,7 @@ Support both English and Kiswahili when the customer uses either language.
 You are an AI guidance assistant and do not replace authorized banking personnel.
           `,
         },
-        ...messages hstory,
+        ...messages history,
       ],
       temperature: 0.3,
       max_tokens: 1000,
