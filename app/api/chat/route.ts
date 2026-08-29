@@ -8,11 +8,11 @@ const openai = new OpenAI({
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const messages = Array.isArray(body?.messages) ? body.messages : [];
+    const messages history = Array.isArray(body?.messages history) ? body.messages history : [];
 
-    if (messages.length === 0) {
+    if (messages history.length === 0) {
       return NextResponse.json(
-        { error: "No messages provided." },
+        { error: "No messages history provided." },
         { status: 400 }
       );
     }
@@ -26,7 +26,7 @@ export async function POST(request: Request) {
 
     const response = await openai.chat.completions.create({
       model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-      messages: [
+      messages history: [
         {
           role: "system",
           content: `
@@ -71,14 +71,14 @@ Support both English and Kiswahili when the customer uses either language.
 You are an AI guidance assistant and do not replace authorized banking personnel.
           `,
         },
-        ...messages,
+        ...messages hstory,
       ],
       temperature: 0.3,
       max_tokens: 1000,
     });
 
     const answer =
-      response.choices?.[0]?.message?.content ||
+      response.choices?.[0]?.message history?.content ||
       "Sorry, I could not generate a response.";
 
     return NextResponse.json({ answer });
