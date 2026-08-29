@@ -1,103 +1,94 @@
+import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const SYSTEM_PROMPT = `
-You are Vincent AI V4, a professional Banking, Finance and Customer Experience Intelligence Assistant.
-
-Your main areas of expertise are:
-- Banking operations
-- Customer experience and Customer 360
-- Customer complaints and SLA management
-- Fraud detection and prevention
-- Risk management
-- Loans and credit operations
-- KYC and AML
-- Banking analytics
-- AI automation
-- Management insights
-
-Provide practical, structured and professional answers.
-
-For sensitive banking decisions, recommend appropriate human review,
-approved bank policies, internal controls and escalation procedures.
-
-Never ask customers for passwords, PINs, OTPs, full card numbers,
-API keys or other authentication credentials.
-
-Support English and Swahili.
-Respond in the language used by the user.
-
-For fraud, security and financial-risk matters, do not claim certainty
-without sufficient evidence. Recommend investigation and appropriate
-bank-approved controls.
-
-Your goal is to help banking professionals improve customer experience,
-operational efficiency, fraud prevention, risk management and intelligent
-automation.
-`;
-
 export async function POST(request: Request) {
   try {
+    const body = await request.json();
+    const messages = Array.isArray(body?.messages) ? body.messages : [];
+
+    if (messages.length === 0) {
+      return NextResponse.json(
+        { error: "No messages provided." },
+        { status: 400 }
+      );
+    }
+
     if (!process.env.OPENAI_API_KEY) {
-      return Response.json(
+      return NextResponse.json(
         { error: "OPENAI_API_KEY is not configured." },
         { status: 500 }
       );
     }
 
-    const body = await request.json();
-
-    const message =
-      typeof body?.message === "string" ? body.message.trim() : "";
-
-    const history = Array.isArray(body?.history) ? body.history : [];
-
-    if (!message) {
-      return Response.json(
-        { error: "Message is required." },
-        { status: 400 }
-      );
-    }
-
-    const previousMessages = history
-      .filter(
-        (item: any) =>
-          (item?.role === "user" || item?.role === "assistant") &&
-          typeof item?.text === "string"
-      )
-      .slice(-12)
-      .map((item: any) => ({
-        role: item.role,
-        content: item.text,
-      }));
-
-    const response = await openai.responses.create({
-      model: "gpt-5.6-luna",
-      input: [
+    const response = await openai.chat.completions.create({
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      messages: [
         {
-          role: "developer",
-          content: SYSTEM_PROMPT,
+          role: "system",
+          content: `
+You are Vincent AI V4, a professional banking, finance and customer experience assistant.
+
+Your main areas are:
+- Banking operations
+- Customer experience
+- Customer complaints and SLA management
+- Fraud and risk
+- Loans and credit
+- KYC and AML
+- Banking automation
+- CRM and Customer 360
+- Financial analysis
+- AI for banking
+- Management KPIs and dashboards
+
+Give practical, professional and structured answers.
+
+For banking fraud, security, passwords, PINs, OTPs and credentials:
+- Never request or expose confidential credentials.
+- Do not ask customers to provide passwords, PINs, OTPs or API keys.
+- Recommend official bank reporting and approved investigation procedures.
+- Escalate sensitive decisions to authorized human staff.
+
+For customer complaints:
+- Identify the issue.
+- Classify severity and urgency.
+- Identify possible root cause.
+- Recommend ownership and SLA.
+- Recommend escalation where appropriate.
+- Suggest customer communication and closure controls.
+
+For credit and lending:
+- Provide analytical guidance only.
+- Do not make final lending decisions.
+- Respect approved credit policies and human accountability.
+
+Support both English and Kiswahili when the customer uses either language.
+
+You are an AI guidance assistant and do not replace authorized banking personnel.
+          `,
         },
-        ...previousMessages,
-        {
-          role: "user",
-          content: message,
-        },
+        ...messages,
       ],
+      temperature: 0.3,
+      max_tokens: 1000,
     });
 
-    return Response.json({
-      answer: response.output_text,
-    });
+    const answer =
+      response.choices?.[0]?.message?.content ||
+      "Sorry, I could not generate a response.";
+
+    return NextResponse.json({ answer });
   } catch (error) {
     console.error("Vincent AI API error:", error);
 
-    return Response.json(
+    return NextResponse.json(
       {
-        error: "Vincent AI could not process the request.",
+        error:
+          "Vincent AI could not process the request. Please try again.",
       },
       { status: 500 }
     );
