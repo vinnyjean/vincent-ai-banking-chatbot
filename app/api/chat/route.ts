@@ -101,7 +101,7 @@ export async function POST(req: Request) {
         },
       ],
     });
-
+//trigger model gpt 5.6
     return NextResponse.json({
       answer: response.output_text,
     });
