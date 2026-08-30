@@ -12,3 +12,4 @@ Then connect the existing page.tsx Send action to POST /api/chat with:
   "message": "...",
   "history": [{"role":"user","text":"..."}]
 }
+Vincent AI V4 deployment synchronization.
