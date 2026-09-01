@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, ReactNode, useMemo, useState } from "react";
 
 type Lang = "en" | "sw";
 type Message = { role: "user" | "assistant"; text: string };
@@ -14,7 +14,173 @@ const modules = [
   ["analytics", "📊", "Insights & Analytics", "KPIs, dashboards and management insight"],
 ] as const;
 
-export default function Home() {
+function FormattedMessage({ text }: { text: string }) {
+  const lines = text.split("\n");
+  const elements: ReactNode[] = [];
+
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i].trim();
+
+    if (!line) {
+      i++;
+      continue;
+    }
+
+    // Markdown table
+    if (
+      line.includes("|") &&
+      i + 1 < lines.length &&
+      lines[i + 1].includes("|") &&
+      lines[i + 1].includes("---")
+    ) {
+      const headers = line
+        .split("|")
+        .map((x) => x.trim())
+        .filter(Boolean);
+
+      i += 2;
+
+      const rows: string[][] = [];
+
+      while (i < lines.length && lines[i].includes("|")) {
+        rows.push(
+          lines[i]
+            .split("|")
+            .map((x) => x.trim())
+            .filter(Boolean)
+        );
+        i++;
+      }
+
+      elements.push(
+        <div className="formatted-table-wrapper" key={`table-${i}`}>
+          <table className="formatted-table">
+            <thead>
+              <tr>
+                {headers.map((header, index) => (
+                  <th key={index}>{formatInline(header)}</th>
+                ))}
+              </tr>
+            </thead>
+
+            <tbody>
+              {rows.map((row, rowIndex) => (
+                <tr key={rowIndex}>
+                  {row.map((cell, cellIndex) => (
+                    <td key={cellIndex}>{formatInline(cell)}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+
+      continue;
+    }
+
+    // Main heading
+    if (line.startsWith("### ")) {
+      elements.push(
+        <h3 className="formatted-heading" key={i}>
+          {formatInline(line.replace(/^### /, ""))}
+        </h3>
+      );
+      i++;
+      continue;
+    }
+
+    // Subheading
+    if (line.startsWith("## ")) {
+      elements.push(
+        <h3 className="formatted-heading" key={i}>
+          {formatInline(line.replace(/^## /, ""))}
+        </h3>
+      );
+      i++;
+      continue;
+    }
+
+    // Bullet point
+    if (/^[-*•]\s+/.test(line)) {
+      const bulletItems: string[] = [];
+
+      while (
+        i < lines.length &&
+        /^[-*•]\s+/.test(lines[i].trim())
+      ) {
+        bulletItems.push(
+          lines[i].trim().replace(/^[-*•]\s+/, "")
+        );
+        i++;
+      }
+
+      elements.push(
+        <ul className="formatted-list" key={`list-${i}`}>
+          {bulletItems.map((item, index) => (
+            <li key={index}>{formatInline(item)}</li>
+          ))}
+        </ul>
+      );
+
+      continue;
+    }
+
+    // Numbered steps
+    if (/^\d+[.)]\s+/.test(line)) {
+      const numberedItems: string[] = [];
+
+      while (
+        i < lines.length &&
+        /^\d+[.)]\s+/.test(lines[i].trim())
+      ) {
+        numberedItems.push(
+          lines[i].trim().replace(/^\d+[.)]\s+/, "")
+        );
+        i++;
+      }
+
+      elements.push(
+        <ol className="formatted-list" key={`numbered-${i}`}>
+          {numberedItems.map((item, index) => (
+            <li key={index}>{formatInline(item)}</li>
+          ))}
+        </ol>
+      );
+
+      continue;
+    }
+
+    // Normal paragraph
+    elements.push(
+      <p className="formatted-paragraph" key={i}>
+        {formatInline(line)}
+      </p>
+    );
+
+    i++;
+  }
+
+  return <div className="formatted-message">{elements}</div>;
+}
+
+function formatInline(text: string): ReactNode {
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+
+  return parts.map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return (
+        <strong key={index}>
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+
+    return part;
+  });
+}
   const [lang, setLang] = useState<Lang>("en");
   const [active, setActive] = useState("cx");
   const [input, setInput] = useState("");
@@ -241,7 +407,9 @@ export default function Home() {
                     <small>
                       {m.role === "assistant" ? "Vincent AI V4" : "You"}
                     </small>
-                    <div className="bubble">{m.text}</div>
+                    <div className="bubble">
+  <FormattedMessage text={m.text} />
+</div>
                     {m.role === "assistant" && (
                       <button className="speak" onClick={() => speak(m.text)}>
                         🔊 Listen
