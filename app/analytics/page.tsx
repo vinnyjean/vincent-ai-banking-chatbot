@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 
 type Metric = {
-  label: string;
+  icon: string;
   value: string;
   change: string;
   description: string;
