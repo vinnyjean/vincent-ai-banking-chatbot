@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
-
+import { verifySessionToken } from "@/lib/auth";
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
 });
@@ -57,6 +57,25 @@ Eligibility guidance, Required information, Risks, Next steps.
 
 export async function POST(req: Request) {
   try {
+    const cookieHeader = req.headers.get("cookie") || "";
+
+    const sessionToken = cookieHeader
+      .split(";")
+      .map((cookie) => cookie.trim())
+      .find((cookie) => cookie.startsWith("vincent_session="))
+      ?.split("=")
+      .slice(1)
+      .join("=");
+
+    const session = verifySessionToken(sessionToken);
+
+    if (!session) {
+      return NextResponse.json(
+        { error: "Authentication required." },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json();
 
     const message =
