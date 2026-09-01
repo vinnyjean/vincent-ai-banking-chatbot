@@ -181,6 +181,7 @@ function formatInline(text: string): ReactNode {
     return part;
   });
 }
+export default function Home() {
   const [lang, setLang] = useState<Lang>("en");
   const [active, setActive] = useState("cx");
   const [input, setInput] = useState("");
