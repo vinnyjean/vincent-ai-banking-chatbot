@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 type Metric = {
   icon: string;
+  label: string;
   value: string;
   change: string;
   description: string;
