@@ -161,10 +161,15 @@ export default function Home() {
               <button
                 key={m[0]}
                 className={active === m[0] ? "nav-item active" : "nav-item"}
-                onClick={() => {
-                  setActive(m[0]);
-                  setInput("");
-                }}
+             onClick={() => {
+  if (m[0] === "analytics") {
+    window.location.href = "/analytics";
+    return;
+  }
+
+  setActive(m[0]);
+  setInput("");
+}}
               >
                 <span>{m[1]}</span>
                 <div>
