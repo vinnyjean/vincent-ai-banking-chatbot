@@ -48,21 +48,23 @@ export async function POST(request: Request) {
     const usernameMatches =
       username.toLowerCase() === configuredUser.username.toLowerCase();
 
-    const passwordMatches = usernameMatches
+ const passwordMatches = usernameMatches
   ? verifyPassword(password, configuredUser.passwordHash)
   : false;
 
-console.log("Vincent auth diagnostic:", {
-  usernameMatches,
-  passwordMatches,
-});
+if (!usernameMatches) {
+  return NextResponse.json(
+    { error: "USERNAME_MISMATCH" },
+    { status: 401 }
+  );
+}
 
-if (!usernameMatches || !passwordMatches) {
-      return NextResponse.json(
-        { error: "Invalid username or password." },
-        { status: 401 }
-      );
-    }
+if (!passwordMatches) {
+  return NextResponse.json(
+    { error: "PASSWORD_MISMATCH" },
+    { status: 401 }
+  );
+}
 
     const token = createSessionToken(
       configuredUser.username,
