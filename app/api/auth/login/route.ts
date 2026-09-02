@@ -61,7 +61,12 @@ if (!usernameMatches) {
 
 if (!passwordMatches) {
   return NextResponse.json(
-    { error: "PASSWORD_MISMATCH" },
+    {
+      error: "PASSWORD_MISMATCH",
+      hashFormat: configuredUser.passwordHash.startsWith("scrypt:"),
+      hashParts: configuredUser.passwordHash.split(":").length,
+      hashLength: configuredUser.passwordHash.length,
+    },
     { status: 401 }
   );
 }
