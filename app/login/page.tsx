@@ -239,7 +239,12 @@ export default function LoginPage() {
           font-size: 14px;
           line-height: 1.5;
         }
-
+.login-card form {
+  display: block;
+  padding: 0;
+  border-top: 0;
+  background: transparent;
+}
         label {
           display: block;
           margin: 16px 0 7px;
