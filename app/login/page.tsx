@@ -38,9 +38,15 @@ export default function LoginPage() {
 
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data?.error || "Login failed.");
-      }
+     if (!response.ok) {
+  if (data?.error === "PASSWORD_MISMATCH" && data?.hashFormat !== undefined) {
+    throw new Error(
+      `PASSWORD_MISMATCH | hashFormat: ${data.hashFormat} | hashParts: ${data.hashParts} | hashLength: ${data.hashLength}`
+    );
+  }
+
+  throw new Error(data?.error || "Login failed.");
+}
 
       router.replace("/");
       router.refresh();
