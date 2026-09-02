@@ -9,7 +9,7 @@ const SESSION_COOKIE = "vincent_session";
 
 function getConfiguredUser() {
   const username = process.env.VINCENT_ADMIN_USERNAME;
-  const passwordHash = process.env.VINCENT_ADMIN_PASSWORD_HASH;
+  const passwordHash = process.env.VINCENT_V4_PASSWORD_HASH;
 
   if (!username || !passwordHash) {
     throw new Error("Vincent authentication credentials are not configured");
