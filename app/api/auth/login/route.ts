@@ -49,10 +49,15 @@ export async function POST(request: Request) {
       username.toLowerCase() === configuredUser.username.toLowerCase();
 
     const passwordMatches = usernameMatches
-      ? verifyPassword(password, configuredUser.passwordHash)
-      : false;
+  ? verifyPassword(password, configuredUser.passwordHash)
+  : false;
 
-    if (!usernameMatches || !passwordMatches) {
+console.log("Vincent auth diagnostic:", {
+  usernameMatches,
+  passwordMatches,
+});
+
+if (!usernameMatches || !passwordMatches) {
       return NextResponse.json(
         { error: "Invalid username or password." },
         { status: 401 }
