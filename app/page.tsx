@@ -392,8 +392,6 @@ export default function Home() {
 </button>
 
 <div className="online">
-              </button>
-              <div className="online">
                 <i /> Online
               </div>
             </div>
