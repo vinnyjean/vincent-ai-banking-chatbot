@@ -379,6 +379,19 @@ export default function Home() {
                 onClick={() => setLang(lang === "en" ? "sw" : "en")}
               >
                 {lang === "en" ? "🇹🇿 SW" : "🇬🇧 EN"}
+             </button>
+
+<button
+  className="logout"
+  onClick={async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.href = "/login";
+  }}
+>
+  🚪 Log out
+</button>
+
+<div className="online">
               </button>
               <div className="online">
                 <i /> Online
